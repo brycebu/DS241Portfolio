@@ -1,0 +1,92 @@
+---
+title: "Experiment 3: More Airline Data"
+subtitle: "Asynchronous lecture"
+date: "2023-09-10"
+output: html_notebook
+---
+The ecperiment (conceotually) continues our class work on flight data.
+We will expand our dataset by going to a root source - the Bureau of Transportation
+
+# Packages 
+
+```{r}
+library(nycflights13)
+library(tidyverse)
+library(janitor)
+library(here)
+```
+
+# Load BOT data
+
+```{r}
+thisfile = here("T_T100D_SEGMENT_US_CARRIER_ONLY.CSV")
+
+df2022 = read_csv(thisfile) %>% clean_names()
+```
+
+## Subsetting to data of interest
+
+Let's focus on flights from La Guardia (airport "LGA") and eliminate cargo flights by requiring at least 1 passenger.
+
+Call the resultant dataframe df9.
+
+```{r}
+df9 = df2022 |> 
+  filter(passengers>0, origin == "LGA")
+```
+
+# Exploring the BOT 2022 data
+
+## Subsetting the data of interest
+
+Lets try to visualize a monthly count of flights using a barchart.
+
+First, a not quite right visualiztion.
+
+```{r}
+df9 |> 
+  ggplot(aes(month)) + geom_bar()
+```
+
+Counting rows is not going to give us a count of flights. The cisualization we want is:
+
+```{r}
+df9 |> 
+  ggplot(aes(month)) + geom_bar(aes(weight = departures_performed))
+```
+
+Observation:
+* low passenger numbers in early 2022 likely due to covid.
+
+###Just because you can
+
+```{r}
+df9 |> 
+  ggplot(aes(month, fill=carrier_name)) + geom_bar(aes(weight=departures_performed))
+```
+
+## Arrivals and departures from LGA
+
+```{r}
+df10 = df2022 |> filter(passengers>0, origin=="LGA" | dest=="LGA")
+
+df10 |> ggplot(aes(month)) + geom_bar(aes(weight = passengers))
+```
+
+```{r}
+df11 = df10 |>
+  select(month, passengers, seats, carrier_name, dest, origin)
+```
+
+```{r}
+df12 = df10 |> select(1:5, month, contains("id"))
+```
+
+```{r}
+df13 = df11 |> mutate(percent_loading = passengers/seats*100)
+
+df13 |> ggplot(aes(percent_loading)) +
+  geom_histogram() + facet_wrap(~carrier_name, scales="free_y")
+```
+
+
