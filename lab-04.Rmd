@@ -1,0 +1,151 @@
+---
+title: "Lab 04 - La Quinta is Spanish for next to Denny's, Pt. 1"
+author: "Bryce Butler"
+date: "10/12/2023"
+output: github_document
+---
+
+### Load packages and data
+
+```{r load-packages, message = FALSE}
+library(tidyverse) 
+library(janitor)
+library(here)
+```
+
+```{r load-data, message = FALSE}
+dennysfile = here("dennys.csv")
+dennys = read_csv(dennysfile) %>% clean_names()
+statesfile = here("states.csv")
+states = read_csv(statesfile) %>% clean_names()
+laquintafile = here("laquinta.csv")
+laquinta = read_csv(laquintafile) %>% clean_names()
+```
+
+### Exercise 1
+
+```{r}
+glimpse(dennys)
+```
+There are 6 dimensions in the dennys dataset which are: address, city, state, zip, longitude, latitude. Each row in the data represents one Denny's location.
+
+### Exercise 2
+
+```{r}
+glimpse(laquinta)
+```
+There are 6 dimensions in the laquinta dataset which are: address, city, state, zip, longitude, latitude. Each row in the data represents one La Quinta location.
+
+### Exercise 3
+
+There are many La Quinta's outside of the US, in countries such as Canada, Mexico, China, New Zealand, Turkey, UAE, Chile, Columbia, and Ecuador. There are not any Denny's outside the US.
+
+### Exercise 4
+
+You could use the latitude and longitude to determine if a location is inside or outside the US.
+
+### Exercise 5
+
+```{r}
+dennys %>% filter(!(state %in% states$abbreviation))
+```
+There are no Denny's outside the US.
+
+### Exercise 6
+
+```{r}
+dennys %>% mutate(country = "United States")
+```
+
+### Exercise 7
+
+PU, AG, CH, QR, SL, VE, and NL are places in Mexico
+FM is in Honduras
+
+### Exercise 8
+
+```{r}
+laquinta <- laquinta %>%
+  mutate(country = case_when(
+    state %in% state.abb     ~ "United States",
+    state %in% c("ON", "BC") ~ "Canada",
+    state == "ANT"           ~ "Colombia",
+    state %in% c("PU", "AG", "CH", "QR", "SL", "VE", "NL")  ~ "Mexico",
+    state == "FM"     ~ "Honduras"
+  ))
+
+```
+```{r}
+laquinta <- laquinta %>%
+  filter(country == "United States")
+```
+
+### Exercise 9
+
+```{r}
+dennys |> count(state, sort = TRUE)
+```
+California has the most Denny's and Delaware has the fewest. This observation is not surprising becuase a big state has the most and a small state has the fewest.
+
+```{r}
+laquinta |> count(state, sort = TRUE)
+```
+Texas has the most La Quinta's and Maine has the fewest.This observation is not surprising becuase a big state has the most and a small state has the fewest.
+
+### Exercise 10
+
+```{r}
+dennys |> 
+  count(state) |> 
+  inner_join(states, by = c("state" = "abbreviation")) |>
+  mutate(ratio = (n/area)*1000)
+```
+
+California has the most Denny's per thousand square miles, besides the District of Columbia.
+
+```{r}
+laquinta |> 
+  count(state) |> 
+  inner_join(states, by = c("state" = "abbreviation")) |>
+  mutate(ratio = (n/area)*1000)
+```
+
+Interestingly, Rhode Island has the most La Quinta's per thousand square miles.
+
+### Exercise 11
+
+```{r}
+dennys <- dennys %>%
+  mutate(establishment = "Denny's")
+laquinta <- laquinta %>%
+  mutate(establishment = "La Quinta")
+
+NCdennys <- dennys |> filter(state == "NC")
+NClaquinta <- laquinta |> filter(state == "NC")
+
+dn_lq <- bind_rows(NCdennys, NClaquinta)
+
+ggplot(dn_lq, mapping = aes(x = longitude, y = latitude, color = establishment)) +
+  geom_point()
+```
+
+Mitch Hedberg's Joke does not appear to hold in North Carolina.
+
+### Exercise 12
+
+```{r}
+dennys <- dennys %>%
+  mutate(establishment = "Denny's")
+laquinta <- laquinta %>%
+  mutate(establishment = "La Quinta")
+
+TXdennys <- dennys |> filter(state == "TX")
+TXlaquinta <- laquinta |> filter(state == "TX")
+
+dn_lq <- bind_rows(TXdennys, TXlaquinta)
+
+ggplot(dn_lq, mapping = aes(x = longitude, y = latitude, color = establishment)) +
+  geom_point(alpha = .8)
+```
+
+Mitch Hedberg's joke appears to hold much better in Texas.
